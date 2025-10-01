@@ -171,7 +171,29 @@ export function buildDSNFromEnvParams(): { dsn: string; source: string } | null 
 
   // Construct DSN
   const protocol = dbType.toLowerCase() === 'postgresql' ? 'postgres' : dbType.toLowerCase();
-  const dsn = `${protocol}://${encodedUser}:${encodedPassword}@${dbHost}:${port}/${encodedDbName}`;
+  let dsn = `${protocol}://${encodedUser}:${encodedPassword}@${dbHost}:${port}/${encodedDbName}`;
+
+  // Add optional query parameters via DB_OPTIONS
+  // Supports two formats:
+  // 1. Query string: "key1=value1&key2=value2"
+  // 2. JSON object: '{"key1":"value1","key2":"value2"}'
+  const dbOptions = process.env.DB_OPTIONS;
+  if (dbOptions) {
+    try {
+      // Try parsing as JSON first
+      const optionsObj = JSON.parse(dbOptions);
+      const queryParams = new URLSearchParams(optionsObj).toString();
+      if (queryParams) {
+        dsn += `?${queryParams}`;
+      }
+    } catch {
+      // Not JSON, treat as query string format
+      const cleaned = dbOptions.startsWith('?') ? dbOptions.slice(1) : dbOptions;
+      if (cleaned) {
+        dsn += `?${cleaned}`;
+      }
+    }
+  }
 
   return {
     dsn,

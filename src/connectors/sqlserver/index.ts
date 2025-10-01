@@ -57,7 +57,10 @@ export class SQLServerDSNParser implements DSNParser {
           options.trustServerCertificate = false;
         } else if (options.sslmode === "require") {
           options.encrypt = true;
-          options.trustServerCertificate = true;
+          options.trustServerCertificate = true; // Use SSL but don't verify certificate
+        } else if (options.sslmode === "verify-ca" || options.sslmode === "verify-full") {
+          options.encrypt = true;
+          options.trustServerCertificate = false; // Use SSL and verify certificate
         }
         // Default behavior (certificate verification) is handled by the default values below
       }
